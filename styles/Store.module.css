@@ -1,0 +1,15 @@
+.container {
+  font-size: 24px;
+  margin-top: 5vh;
+  display: flex;
+  justify-content: center;
+}
+
+.store {
+  font-size: 1.25rem;
+  padding: 5rem 0;
+  flex: 1;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}

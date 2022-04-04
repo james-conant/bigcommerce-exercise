@@ -1,41 +1,70 @@
-import { useState } from "react";
-import Link from "next/link";
 import Head from "next/head";
+import { Button } from "../components/Button";
 import { GetStaticProps, GetStaticPaths } from "next";
 import axios from "axios";
+import styles from "../styles/Store.module.css";
 
-interface ProductProps {
-  product: any;
+type image = {
+  height: string;
+  img: string;
+  title: string;
+  url: string;
+  width: string;
+};
+
+type url = {
+  type: string;
+  value: string;
+  defaultText: string;
+  customText: string;
+  target: string;
+  nofollow: string;
+  locale: string;
+  customValues: any[];
+};
+
+interface Store {
+  description: string;
+  id: string;
+  title: string;
+  image: image;
+  url: url;
+}
+
+interface StoreProps {
+  store: Store;
   pids: string[];
 }
 
-export default function Product({ product, pids }: ProductProps) {
-  const [position, setPosition] = useState(pids.indexOf(product.id));
-  let src = product.image.img.match(/(?:"[^"]*"|^[^"]*$)/)[0].replace(/"/g, "");
+export default function Store({ store, pids }: StoreProps) {
+  const position = pids.indexOf(store.id);
+  const src = store.image.img
+    .match(/(?:"[^"]*"|^[^"]*$)/)![0]
+    .replace(/"/g, "");
 
-  const minus = () => pids[position - 1];
-  const plus = () => pids[position + 1];
+  const minus = pids[position - 1];
+  const plus = pids[position + 1];
 
   return (
     <>
       <Head>
-        <title>{product.title}</title>
-        <meta name="description" content={product.description} />
+        <meta name="description" content={store.description} />
+        <title>{store.title}</title>
       </Head>
-
-      <Link href={`/${minus()}`}>
-        <button disabled={position < 1}>prev</button>
-      </Link>
-      <img src={src} />
-      <Link href={`/${plus()}`}>
-        <button disabled={position > pids.length - 2}>next</button>
-      </Link>
+      <div className={styles.container}>
+        {position + 1}/{pids.length}
+      </div>
+      <div className={styles.store}>
+        <Button pos={minus} exp={position < 1} title="prev" />
+        <img src={src} />
+        <Button pos={plus} exp={position > pids.length - 2} title="next" />
+      </div>
     </>
   );
 }
 
 export const getStaticProps: GetStaticProps = async (context) => {
-  const res = await axios.get(
+  const store = await axios.get(
     `https://www.bigcommerce.com/actions/bcCore/interview/getShowcaseEntryById?id=${context.params?.id}`
   );
 
@@ -45,8 +74,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
   return {
     props: {
-      product: res.data,
-      pids: pids.data,
+      store: store.data,
+      pids: pids.data.sort(),
     },
   };
 };
