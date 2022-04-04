@@ -1,45 +1,64 @@
-import { Fragment, useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Head from "next/head";
+import { GetStaticProps, GetStaticPaths } from "next";
 import axios from "axios";
 
-const product = ({ product }: any) => {
-  console.log(product.image.img);
+interface ProductProps {
+  product: any;
+  pids: string[];
+}
+
+export default function Product({ product, pids }: ProductProps) {
+  const [position, setPosition] = useState(pids.indexOf(product.id));
+  let src = product.image.img.match(/(?:"[^"]*"|^[^"]*$)/)[0].replace(/"/g, "");
+
+  const minus = () => pids[position - 1];
+  const plus = () => pids[position + 1];
 
   return (
-    <Fragment>
+    <>
       <Head>
         <title>{product.title}</title>
         <meta name="description" content={product.description} />
       </Head>
 
-      <div dangerouslySetInnerHTML={{ __html: product.image.img }}></div>
-    </Fragment>
+      <Link href={`/${minus()}`}>
+        <button disabled={position < 1}>prev</button>
+      </Link>
+      <img src={src} />
+      <Link href={`/${plus()}`}>
+        <button disabled={position > pids.length - 2}>next</button>
+      </Link>
+    </>
   );
-};
+}
 
-export const getStaticProps = async (context: any) => {
+export const getStaticProps: GetStaticProps = async (context) => {
   const res = await axios.get(
-    `https://www.bigcommerce.com/actions/bcCore/interview/getShowcaseEntryById?id=${context.params.id}`
+    `https://www.bigcommerce.com/actions/bcCore/interview/getShowcaseEntryById?id=${context.params?.id}`
+  );
+
+  const pids = await axios.get(
+    "https://www.bigcommerce.com/actions/bcCore/interview/getShowcaseEntryIds"
   );
 
   return {
     props: {
       product: res.data,
+      pids: pids.data,
     },
   };
 };
 
-export const getStaticPaths = async () => {
+export const getStaticPaths: GetStaticPaths = async () => {
   const pids = await axios.get(
     "https://www.bigcommerce.com/actions/bcCore/interview/getShowcaseEntryIds"
   );
-  const paths = pids.data.map((id: string) => ({ params: { id: id } }));
+  const paths = pids.data.sort().map((id: string) => ({ params: { id } }));
 
   return {
     paths,
     fallback: false,
   };
 };
-
-export default product;
